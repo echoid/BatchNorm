@@ -7,6 +7,8 @@ import pandas as pd
 from tqdm import tqdm
 from torch.utils.data import Dataset, DataLoader
 import torch.nn.functional as F
+from utility import xavier_init,MyDataset,sample_Z
+
 
 dataset_file = 'Spam.csv'  # 'Letter.csv' for Letter dataset an 'Spam.csv' for Spam dataset
 use_gpu = False  # set it to True to use GPU and False to use CPU
@@ -69,19 +71,14 @@ train_Mask = Missing[:Train_No, :]
 test_Mask = Missing[Train_No:, :]
 
 
-
-def xavier_init(size):
-    in_dim = size[0]
-    xavier_stddev = 1. / np.sqrt(in_dim / 2.)
-    return np.random.normal(size = size, scale = xavier_stddev)
+# Dataloader
     
-# Hint Vector Generation
-def sample_M(m, n, p):
-    A = np.random.uniform(0., 1., size = [m, n])
-    B = A > p
-    C = 1.*B
-    return C
+train_dataset,test_dataset = MyDataset(trainX, train_Mask), MyDataset(testX, test_Mask)
 
+train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
+
+    
 
 
 class Generator(nn.Module):
@@ -130,17 +127,6 @@ class Generator(nn.Module):
 
 
 
-# Random sample generator for Z
-def sample_Z(m, n):
-    return np.random.uniform(0., 0.01, size = [m, n])        
-
-# Mini-batch generation
-def sample_idx(m, n):
-    A = np.random.permutation(m)
-    idx = A[:n]
-    return idx
-
-
 def loss(X, M, Noise):
 
     G_sample = generator(Noise, M)
@@ -149,28 +135,9 @@ def loss(X, M, Noise):
 
 
 generator = Generator(Dim, H_Dim1, H_Dim2)
-
-
-class MyDataset(Dataset):
-    def __init__(self, X, M):
-        self.X = torch.tensor(X)
-        self.M = torch.tensor(M)
-
-    def __len__(self):
-        return len(self.X)
-
-    def __getitem__(self, idx):
-        return self.X[idx], self.M[idx]
-    
-
-train_dataset,test_dataset = MyDataset(trainX, train_Mask), MyDataset(testX, test_Mask)
-
-train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
-
-
-
 optimizer = torch.optim.Adam(params=generator.parameters())
+
+
 for it in tqdm(range(epoch)):
     generator.train()
 
