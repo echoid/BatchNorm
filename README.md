@@ -3,5 +3,9 @@
 
 run script
 ```
-python gan.py
+python gain_modify.py
 ```
+
+Current Dataset: Spam
+Missing mechanism: Missing Completely At Random with missing rate 20%
+
