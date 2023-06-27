@@ -149,10 +149,7 @@ for it in tqdm(range(epoch)):
 
         generator.G_bn1.track_running_stats = False 
         generator.G_bn2.track_running_stats = False
-        
-        # do not update running_mean and running_var, compute loss to update weight and bias.
-        # print('Initial mean and vars for 1st BatchNorm:', generator.batch_mean1, generator.batch_var1)
-        # print('Initial mean and vars for 2nt BatchNorm:', generator.batch_mean2, generator.batch_var2)
+
         Z = sample_Z(X_mb.shape[0], Dim)
         Noise = M_mb * X_mb + (1-M_mb) * Z
 
@@ -175,9 +172,6 @@ for it in tqdm(range(epoch)):
         generator.G_bn1.track_running_stats = True 
         generator.G_bn2.track_running_stats = True
         
-        # do not update running_mean and running_var, compute loss to update weight and bias.
-        # print('Initial mean and vars for 1st BatchNorm:', generator.batch_mean1, generator.batch_var1)
-        # print('Initial mean and vars for 2nt BatchNorm:', generator.batch_mean2, generator.batch_var2)
         Z = sample_Z(X_mb.shape[0], Dim)
         Noise = M_mb * X_mb + (1-M_mb) * Z
 
