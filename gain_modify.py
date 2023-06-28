@@ -143,10 +143,13 @@ for it in tqdm(range(epoch)):
 
     #print('Initial weight & bias:', generator.weight.data, generator.bias.data)
     batch_no = 0
-    print('======Running first pass======')
+    
     train_iterator = tqdm(train_loader, desc='Training Batch', leave=False)
     for X_mb, M_mb in train_iterator:
+        batch_no += 1
 
+        print("======Batch {} Start======".format(batch_no))
+        print('Running first pass:')
         generator.G_bn1.track_running_stats = False 
         generator.G_bn2.track_running_stats = False
 
@@ -158,16 +161,13 @@ for it in tqdm(range(epoch)):
         G_loss = loss(X=X_mb, M=M_mb, Noise=Noise)[0]
         G_loss.backward()
         optimizer.step()
-        batch_no += 1
         
-        train_iterator.set_postfix({'Train Loss': G_loss.item()})
-        print("Batch:",batch_no)
+        
+        
         print('1st BatchNorm Mean: {:.4} Var:{:.4}'.format(torch.mean(generator.batch_mean1), torch.mean(generator.batch_var1)))
         print('2nt BatchNormMean: {:.4} Var:{:.4}'.format(torch.mean(generator.batch_mean2), torch.mean(generator.batch_var2)), end='\n\n')
 
-    print('======Running second pass======')
-    batch_no = 0
-    for X_mb, M_mb in train_iterator:
+        print('Running second pass:')
 
         generator.G_bn1.track_running_stats = True 
         generator.G_bn2.track_running_stats = True
@@ -179,12 +179,14 @@ for it in tqdm(range(epoch)):
 
         Imp = loss(X=X_mb, M=M_mb, Noise=Noise)[1]
 
-        batch_no += 1
-
-        print("Batch:",batch_no)
         print('1st BatchNorm Mean: {:.4} Var:{:.4}'.format(torch.mean(generator.batch_mean1), torch.mean(generator.batch_var1)))
         print('2nt BatchNorm Mean: {:.4} Var:{:.4}'.format(torch.mean(generator.batch_mean2), torch.mean(generator.batch_var2)), end='\n\n')
-    
+
+        
+        print("======Batch {} End======\n\n".format(batch_no))
+
+        #train_iterator.set_postfix({'Train Loss': G_loss.item()})
+    exit()
     print('Iter: {}'.format(it), end='\t')
     print('Train_loss: {:.4}'.format(np.sqrt(G_loss.item())), end='\n\n\n')
 
