@@ -18,7 +18,7 @@ from MNAR.missing_process.block_rules import *
   # 'Letter.csv' for Letter dataset an 'Spam.csv' for Spam dataset
 missing_type = "quantile"
 
-use_gpu = True  # set it to True to use GPU and False to use CPU
+  # set it to True to use GPU and False to use CPU
 use_BN = True
 states = [True,True]
 
@@ -28,8 +28,7 @@ missing_rule = ["Q1_complete","Q1_partial","Q2_complete","Q2_partial","Q3_comple
 "Q1_Q2_complete","Q1_Q2_partial","Q1_Q3_complete","Q1_Q3_partial","Q1_Q4_complete","Q1_Q4_partial","Q2_Q3_complete","Q2_Q3_partial",
 "Q2_Q4_complete","Q2_Q4_partial","Q3_Q4_complete","Q3_Q4_partial"]
 
-if use_gpu:
-    torch.cuda.set_device(0)
+
 #%% System Parameters
 batch_size = 64
 epoch = 100
@@ -158,7 +157,7 @@ def run(dataset_file,missing_rule, use_BN):
 
         for it in tqdm(range(epoch)):
             imputer.train()
-
+            total_loss = 0
             batch_no = 0
             for truth_X, mask, data_X in train_loader:
                 batch_no += 1
@@ -166,37 +165,38 @@ def run(dataset_file,missing_rule, use_BN):
                 # print("======Batch {} Start======".format(batch_no))
                 # print('Running first pass:')
 
-                set_all_BN_layers_tracking_state(imputer,states[0])
+                set_all_BN_layers_tracking_state(imputer,True)
 
                 optimizer.zero_grad()
 
-                Imputer_loss = loss(truth=truth_X, mask=mask, data=data_X,imputer = imputer)[0]
+                Imputer_loss = loss(truth=truth_X, mask=mask, data=data_X, imputer = imputer )[0]
+                total_loss +=Imputer_loss
                 Imputer_loss.backward()
                 optimizer.step()
-                
+
                 # print('1st BatchNorm Mean: {:.4} Var:{:.4}'.format(torch.mean(imputer.batch_mean1), torch.mean(imputer.batch_var1)))
                 # print('2nt BatchNorm Mean: {:.4} Var:{:.4}'.format(torch.mean(imputer.batch_mean2), torch.mean(imputer.batch_var2)), end='\n\n')
 
                 # print('Running second pass:')
 
-                set_all_BN_layers_tracking_state(imputer,states[1])
+                # set_all_BN_layers_tracking_state(imputer,True)
 
-                prediction = loss(truth=truth_X, mask=mask, data=data_X,imputer = imputer)[1]
+                # prediction = loss(truth=truth_X, mask=mask, data=data_X,imputer = imputer)[1]
 
-                imputed_data = impute_with_prediction(truth_X, mask, prediction)
+                # imputed_data = impute_with_prediction(truth_X, mask, prediction)
 
-                _ = imputer(imputed_data, mask)
+                # _ = imputer(imputed_data, mask)
 
 
                 # print('1st BatchNorm Mean: {:.4} Var:{:.4}'.format(torch.mean(imputer.batch_mean1), torch.mean(imputer.batch_var1)))
                 # print('2nt BatchNorm Mean: {:.4} Var:{:.4}'.format(torch.mean(imputer.batch_mean2), torch.mean(imputer.batch_var2)), end='\n\n')
 
-                
+
                 # print("======Batch {} End======\n\n".format(batch_no))
 
 
             print('Iter: {}'.format(it), end='\t')
-            print('Train_loss: {:.4}'.format(Imputer_loss.item()))
+            print('Train_loss: {:.4}'.format(np.sqrt(total_loss.item()/batch_no)))
 
 
         # Evaluation
@@ -243,7 +243,7 @@ def run(dataset_file,missing_rule, use_BN):
 
 
     result = pd.DataFrame({"Missing_Rule":[rule_name for rule_name in missing_rule],"Imputer RMSE":Imputer_RMSE,"Baseline RMSE":baseline_RMSE})
-    result.to_csv("results/{}_BN_singlepass.csv".format(dataset_file),index=False)
+    result.to_csv("results/{}_BN_singlepass_cpu.csv".format(dataset_file),index=False)
 
 
 run(dataset_file,missing_rule,use_BN)

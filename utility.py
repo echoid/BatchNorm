@@ -149,3 +149,72 @@ class MyDataset(Dataset):
 
     def __getitem__(self, idx):
         return self.X[idx], self.M[idx], self.input[idx]
+    
+
+
+class Imputation_model(nn.Module):
+    def __init__(self, dim, hidden_dim1, hidden_dim2):
+        super(Imputation_model, self).__init__()
+
+        # self.No = No
+        # self.Dim = Dim
+
+        self.G_W1 = nn.Parameter(torch.tensor(xavier_init([dim * 2, hidden_dim1]), dtype=torch.float32), requires_grad=True)
+        self.G_b1 = nn.Parameter(torch.zeros(hidden_dim1, dtype=torch.float32), requires_grad=True)
+        self.G_bn1 = nn.BatchNorm1d(hidden_dim1)
+
+        self.G_W2 = nn.Parameter(torch.tensor(xavier_init([hidden_dim1, hidden_dim2]), dtype=torch.float32), requires_grad=True)
+        self.G_b2 = nn.Parameter(torch.zeros(hidden_dim2, dtype=torch.float32), requires_grad=True)
+        self.G_bn2 = nn.BatchNorm1d(hidden_dim2)
+
+        self.G_W3 = nn.Parameter(torch.tensor(xavier_init([hidden_dim2, dim]), dtype=torch.float32), requires_grad=True)
+        self.G_b3 = nn.Parameter(torch.zeros(dim, dtype=torch.float32), requires_grad=True)
+
+
+        self.batch_mean1 = None
+        self.batch_var1 = None
+
+        self.batch_mean2 = None
+        self.batch_var2 = None
+
+    def forward(self, data, mask):
+        inputs = torch.cat(dim=1, tensors=[data, mask])  # Mask + Data Concatenate
+        inputs = inputs.float()  
+        G_h1 = F.relu(torch.matmul(inputs, self.G_W1.float()) + self.G_b1.float())
+        G_h1 = self.G_bn1(G_h1)  # Batch Normalization
+        G_h2 = F.relu(torch.matmul(G_h1, self.G_W2.float()) + self.G_b2.float())
+        G_h2 = self.G_bn2(G_h2)  # Batch Normalization
+        G_prob = torch.sigmoid(torch.matmul(G_h2, self.G_W3.float()) + self.G_b3.float())  # [0,1] normalized Output
+
+        self.batch_mean1 = self.G_bn1.running_mean
+        self.batch_var1 = self.G_bn1.running_var
+
+
+        self.batch_mean2 = self.G_bn2.running_mean
+        self.batch_var2 = self.G_bn2.running_var
+
+
+        return G_prob
+
+def set_all_BN_layers_tracking_state(model, state):
+    for module in model.modules():
+        if isinstance(module, nn.BatchNorm1d):
+            module.track_running_stats = state
+
+def get_dataset_loaders(trainX, testX, train_Mask, test_Mask, train_input, test_input,batch_size = 128):
+
+    train_dataset, test_dataset = MyDataset(trainX, train_Mask,train_input), MyDataset(testX, test_Mask, test_input)
+
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
+    return train_loader , test_loader
+
+def loss(truth, mask, data,imputer):
+
+    generated = imputer(data, mask)
+
+    return  torch.mean(((1 - mask) * truth - (1 - mask) * generated) ** 2) / torch.mean(1 - mask), generated
+
+def impute_with_prediction(original_data, mask, prediction):
+
+    return mask * original_data + (1 - mask) * prediction
