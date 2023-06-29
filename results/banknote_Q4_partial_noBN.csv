@@ -1,9 +1,0 @@
-Missing_Rule,Imputer RMSE,Baseline RMSE
-Q1_complete,0.56261,0.81973
-Q1_partial,0.56088,0.70206
-Q2_complete,0.10197,0.16697
-Q2_partial,0.10903,0.14705
-Q3_complete,0.08462,0.27313
-Q3_partial,0.08432,0.23795
-Q4_complete,0.10032,0.66164
-Q4_partial,0.08918,0.56365

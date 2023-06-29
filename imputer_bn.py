@@ -14,13 +14,15 @@ sys.path.append(parent_directory)
 from MNAR.missing_process.block_rules import *
 
 
-dataset_file = "banknote"#'concrete_compression', "wine_quality_red","wine_quality_white"
+#dataset_file = "banknote"#'concrete_compression', "wine_quality_red","wine_quality_white"
   # 'Letter.csv' for Letter dataset an 'Spam.csv' for Spam dataset
 missing_type = "quantile"
 
-use_gpu = False  # set it to True to use GPU and False to use CPU
-use_BN = False
-states = [False,True]
+use_gpu = True  # set it to True to use GPU and False to use CPU
+use_BN = True
+states = [True,True]
+
+dataset_file = sys.argv[1]
 
 missing_rule = ["Q1_complete","Q1_partial","Q2_complete","Q2_partial","Q3_complete","Q3_partial","Q4_complete","Q4_partial",
 "Q1_Q2_complete","Q1_Q2_partial","Q1_Q3_complete","Q1_Q3_partial","Q1_Q4_complete","Q1_Q4_partial","Q2_Q3_complete","Q2_Q3_partial",
@@ -131,11 +133,14 @@ def check_and_fill_nan(array, reference_array):
 
 
 def run(dataset_file,missing_rule, use_BN):
+    
+   
 
     Imputer_RMSE = []
     baseline_RMSE = []
     
     for rule_name in missing_rule:
+        print(dataset_file,rule_name,use_BN,states)
         trainX, testX, train_Mask, test_Mask, train_input, test_input, No, Dim = load_dataloader(dataset_file,missing_type, rule_name)
 
     
@@ -214,27 +219,21 @@ def run(dataset_file,missing_rule, use_BN):
         print('Final Test RMSE: {:.4f}'.format(rmse_final.item()))
 
         ###################Baseline###############################
-        train_obs = trainX
-        test_obs = testX
+ 
+        train_nan = trainX.copy()
+        test_nan = testX.copy()
+        train_nan[train_Mask == 0] = np.nan
+        test_nan[test_Mask == 0] = np.nan
 
-        train_mask = train_Mask
-        test_mask = test_Mask
-
-
-        train_nan = train_obs.copy()
-        test_nan = test_obs.copy()
-        train_nan[train_mask == 0] = np.nan
-        test_nan[test_mask == 0] = np.nan
-
-        train_nan = check_and_fill_nan(train_nan,train_obs)
+        train_nan = check_and_fill_nan(train_nan,trainX)
 
         # ------------------------------------------------------------------------------
         imp = SimpleImputer(missing_values=np.nan, strategy='mean')
         imp.fit(train_nan)
         train_imp = imp.transform(train_nan)
         test_imp = imp.transform(test_nan)
-        #train_rmse = np.sqrt(np.sum((train_obs - train_imp) ** 2 * (1 - train_mask)) / np.sum(1 - train_mask))
-        test_rmse = np.sqrt(np.sum((test_obs - test_imp) ** 2 * (1 - test_mask)) / np.sum(1 - test_mask))
+        #train_rmse = np.sqrt(np.sum((trainX - train_imp) ** 2 * (1 - train_mask)) / np.sum(1 - train_mask))
+        test_rmse = np.sqrt(np.sum((testX - test_imp) ** 2 * (1 - test_Mask)) / np.sum(1 - test_Mask))
 
 
         print("Mean Imputer test_rmse:",test_rmse)
@@ -244,7 +243,7 @@ def run(dataset_file,missing_rule, use_BN):
 
 
     result = pd.DataFrame({"Missing_Rule":[rule_name for rule_name in missing_rule],"Imputer RMSE":Imputer_RMSE,"Baseline RMSE":baseline_RMSE})
-    result.to_csv("results/{}_{}_noBN.csv".format(dataset_file,rule_name),index=False)
+    result.to_csv("results/{}_BN_singlepass.csv".format(dataset_file),index=False)
 
 
 run(dataset_file,missing_rule,use_BN)
