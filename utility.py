@@ -11,6 +11,14 @@ import pickle
 train_rate = 0.8
 p_miss = 0.2
 
+p_hint = 0.9
+
+def sample_M(m, n, p):
+    A = np.random.uniform(0., 1., size = [m, n])
+    B = A > p
+    C = 1.*B
+    return C
+
 
 def load_dataloader(dataname,missing_type = "quantile", missing_name = "Q4_complete",seed = 1):
 
@@ -61,9 +69,23 @@ def load_dataloader(dataname,missing_type = "quantile", missing_name = "Q4_compl
 
     test_input = Xtest_mask * Xtest + (1 - Xtest_mask) * test_Z
 
+    # train_input = Xtrain_mask * Xtrain + (1 - Xtrain_mask) * 0
+
+    # test_input = Xtest_mask * Xtest + (1 - Xtest_mask) * 0
 
 
-    return Xtrain, Xtest, Xtrain_mask, Xtest_mask , train_input, test_input , N, D
+    train_H = sample_M(Xtrain.shape[0], D, 1-p_hint)
+    train_H = Xtrain_mask * train_H
+
+
+    test_H = sample_M(Xtest.shape[0], D, 1-p_hint)
+    test_H = Xtest_mask * test_H
+
+
+
+
+
+    return Xtrain, Xtest, Xtrain_mask, Xtest_mask , train_input, test_input , N, D, train_H, test_H
 
 
 def xavier_init(size):
@@ -134,21 +156,22 @@ def preprocess(dataset_file,train_rate = 0.8,p_miss = 0.2):
 
     test_Z = sample_Z(testX.shape[0], Dim)
     #test_input = test_Mask * testX + (1 - test_Mask) * test_Z
-    test_input = train_Mask * trainX + (1 - train_Mask) * 0
+    test_input = test_Mask * testX + (1 - test_Mask) * 0
     return trainX, testX, train_Mask, test_Mask, train_input, test_input,No ,Dim
 
 
 class MyDataset(Dataset):
-    def __init__(self, X, M, input):
+    def __init__(self, X, M, input,h):
         self.X = torch.tensor(X).float()
         self.M = torch.tensor(M).float()
         self.input = torch.tensor(input).float()
+        self.h = torch.tensor(h).float()
 
     def __len__(self):
         return len(self.X)
 
     def __getitem__(self, idx):
-        return self.X[idx], self.M[idx], self.input[idx]
+        return self.X[idx], self.M[idx], self.input[idx],self.h[idx]
     
 
 
