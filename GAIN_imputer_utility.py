@@ -82,9 +82,6 @@ def load_dataloader(dataname,missing_type = "quantile", missing_name = "Q4_compl
     test_H = Xtest_mask * test_H
 
 
-
-
-
     return Xtrain, Xtest, Xtrain_mask, Xtest_mask , train_input, test_input , N, D, train_H, test_H
 
 
@@ -229,7 +226,7 @@ def get_dataset_loaders(trainX, testX, train_Mask, test_Mask, train_input, test_
     train_dataset, test_dataset = MyDataset(trainX, train_Mask,train_input), MyDataset(testX, test_Mask, test_input)
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
     return train_loader , test_loader
 
 def loss(truth, mask, data,imputer):
