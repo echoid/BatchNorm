@@ -31,7 +31,7 @@ missing_rule = ["Q1_complete","Q1_partial","Q2_complete","Q2_partial","Q3_comple
 
 #%% System Parameters
 batch_size = 64
-epoch = 100
+epoch = 200
 
 
 
@@ -179,13 +179,13 @@ def run(dataset_file,missing_rule, use_BN):
 
                 # print('Running second pass:')
 
-                # set_all_BN_layers_tracking_state(imputer,True)
+                set_all_BN_layers_tracking_state(imputer,True)
 
-                # prediction = loss(truth=truth_X, mask=mask, data=data_X,imputer = imputer)[1]
+                prediction = loss(truth=truth_X, mask=mask, data=data_X,imputer = imputer)[1]
 
-                # imputed_data = impute_with_prediction(truth_X, mask, prediction)
+                imputed_data = impute_with_prediction(truth_X, mask, prediction)
 
-                # _ = imputer(imputed_data, mask)
+                _ = imputer(imputed_data, mask)
 
 
                 # print('1st BatchNorm Mean: {:.4} Var:{:.4}'.format(torch.mean(imputer.batch_mean1), torch.mean(imputer.batch_var1)))
@@ -243,7 +243,7 @@ def run(dataset_file,missing_rule, use_BN):
 
 
     result = pd.DataFrame({"Missing_Rule":[rule_name for rule_name in missing_rule],"Imputer RMSE":Imputer_RMSE,"Baseline RMSE":baseline_RMSE})
-    result.to_csv("results/{}_BN_singlepass_cpu.csv".format(dataset_file),index=False)
+    result.to_csv("results/{}_64batch.csv".format(dataset_file),index=False)
 
 
 run(dataset_file,missing_rule,use_BN)

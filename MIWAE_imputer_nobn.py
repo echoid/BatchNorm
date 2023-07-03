@@ -46,7 +46,7 @@ n_epochs = 2002
 
 #cuda = torch.cuda.is_available()
 cuda = False
-use_bn = [True,True]
+use_bn = [False,False]
 
 
 
@@ -112,9 +112,9 @@ def run(dataset_file,missing_name):
             loss.backward()
             optimizer.step()
 
-            set_BN_layers_tracking_state(MIWAE, [True, True])
+            # set_BN_layers_tracking_state(MIWAE, [True, True])
 
-            _ = MIWAE(x_hat.float(), b_mask.float(), L=10).cpu().detach().numpy()
+            # _ = MIWAE(x_hat.float(), b_mask.float(), L=10).cpu().detach().numpy()
 
 
         if epoch % 100 == 1:
@@ -217,7 +217,7 @@ result = pd.DataFrame({"Missing_Rule":[rule_name for rule_name in missing_rule],
                        ,"MIWAE RMSE":MIWAE_result
                        })
 
-result.to_csv("results/{}_2Pass.csv".format(dataset_file),index=False)
+result.to_csv("results/{}_noPass.csv".format(dataset_file),index=False)
     
 
 
