@@ -31,9 +31,10 @@ from MNAR.missing_process.block_rules import *
 
 dataset_file = sys.argv[1]
 
-missing_rule = ["Q1_complete","Q1_partial","Q2_complete","Q2_partial","Q3_complete","Q3_partial","Q4_complete","Q4_partial",
-"Q1_Q2_complete","Q1_Q2_partial","Q1_Q3_complete","Q1_Q3_partial","Q1_Q4_complete","Q1_Q4_partial","Q2_Q3_complete","Q2_Q3_partial",
-"Q2_Q4_complete","Q2_Q4_partial","Q3_Q4_complete","Q3_Q4_partial"]
+missing_rule = ["Q1_complete"]
+#["Q1_complete","Q1_partial","Q2_complete","Q2_partial","Q3_complete","Q3_partial","Q4_complete","Q4_partial",
+#"Q1_Q2_complete","Q1_Q2_partial","Q1_Q3_complete","Q1_Q3_partial","Q1_Q4_complete","Q1_Q4_partial","Q2_Q3_complete","Q2_Q3_partial",
+#"Q2_Q4_complete","Q2_Q4_partial","Q3_Q4_complete","Q3_Q4_partial"]
 
 
 
@@ -41,7 +42,7 @@ h = 128 # number of hidden units in (same for all MLPs)
 d = 1 # dimension of the latent space
 K = 20 # number of IS during training
 bs = 64 # batch size
-n_epochs = 2002
+n_epochs = 1002
 
 
 #cuda = torch.cuda.is_available()
@@ -176,7 +177,7 @@ def run(dataset_file,missing_name):
     print("MF Test RMSE:",mf_test)
     print("Ridge Test RMSE:",ridge_test)
     print("Mean Test RMSE:",mean_test)
-    #print("MIWAE Test RMSE:",MIWAE_test)
+    print("MIWAE Test RMSE:",MIWAE_test)
 
 
 
@@ -187,7 +188,8 @@ def run(dataset_file,missing_name):
     plt.legend(["MIWAE","missForest","Iterative ridge", "Mean imputation"])
     plt.title("Train Set Imputation RMSE")
     plt.xlabel("Epochs")
-    plt.savefig("image/{}_{}.png".format(dataset_file,missing_name))
+    plt.savefig("image/{}_{}_test.png".format(dataset_file,missing_name))
+    plt.close()
 
     return [mf_test,ridge_test,mean_test,MIWAE_test
             ]
@@ -217,7 +219,7 @@ result = pd.DataFrame({"Missing_Rule":[rule_name for rule_name in missing_rule],
                        ,"MIWAE RMSE":MIWAE_result
                        })
 
-result.to_csv("results/{}_noPass.csv".format(dataset_file),index=False)
+result.to_csv("results/TEST_{}_noPass.csv".format(dataset_file),index=False)
     
 
 

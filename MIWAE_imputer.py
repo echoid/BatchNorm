@@ -31,9 +31,10 @@ from MNAR.missing_process.block_rules import *
 
 dataset_file = sys.argv[1]
 
-missing_rule = ["Q1_complete","Q1_partial","Q2_complete","Q2_partial","Q3_complete","Q3_partial","Q4_complete","Q4_partial",
-"Q1_Q2_complete","Q1_Q2_partial","Q1_Q3_complete","Q1_Q3_partial","Q1_Q4_complete","Q1_Q4_partial","Q2_Q3_complete","Q2_Q3_partial",
-"Q2_Q4_complete","Q2_Q4_partial","Q3_Q4_complete","Q3_Q4_partial"]
+missing_rule = ["Q1_complete"]
+# ["Q1_complete","Q1_partial","Q2_complete","Q2_partial","Q3_complete","Q3_partial","Q4_complete","Q4_partial",
+# "Q1_Q2_complete","Q1_Q2_partial","Q1_Q3_complete","Q1_Q3_partial","Q1_Q4_complete","Q1_Q4_partial","Q2_Q3_complete","Q2_Q3_partial",
+# "Q2_Q4_complete","Q2_Q4_partial","Q3_Q4_complete","Q3_Q4_partial"]
 
 
 
@@ -112,6 +113,7 @@ def run(dataset_file,missing_name):
             loss.backward()
             optimizer.step()
 
+
             set_BN_layers_tracking_state(MIWAE, [True, True])
 
             _ = MIWAE(x_hat.float(), b_mask.float(), L=10).cpu().detach().numpy()
@@ -176,18 +178,18 @@ def run(dataset_file,missing_name):
     print("MF Test RMSE:",mf_test)
     print("Ridge Test RMSE:",ridge_test)
     print("Mean Test RMSE:",mean_test)
-    #print("MIWAE Test RMSE:",MIWAE_test)
+    print("MIWAE Test RMSE:",MIWAE_test)
 
 
 
-    plt.plot(range(1,n_epochs,100),mse_train,color="blue")
-    plt.axhline(y=rmse(xhat_mf_train, Xtrain, Xtrain_mask),  linestyle='-',color="red")
-    plt.axhline(y=rmse(xhat_ridge_train, Xtrain, Xtrain_mask),  linestyle='-',color="orange")
-    plt.axhline(y=rmse(xhat_mean_train, Xtrain, Xtrain_mask),  linestyle='-',color="green")
-    plt.legend(["MIWAE","missForest","Iterative ridge", "Mean imputation"])
-    plt.title("Train Set Imputation RMSE")
-    plt.xlabel("Epochs")
-    plt.savefig("image/{}_{}.png".format(dataset_file,missing_name))
+    # plt.plot(range(1,n_epochs,100),mse_train,color="blue")
+    # plt.axhline(y=rmse(xhat_mf_train, Xtrain, Xtrain_mask),  linestyle='-',color="red")
+    # plt.axhline(y=rmse(xhat_ridge_train, Xtrain, Xtrain_mask),  linestyle='-',color="orange")
+    # plt.axhline(y=rmse(xhat_mean_train, Xtrain, Xtrain_mask),  linestyle='-',color="green")
+    # plt.legend(["MIWAE","missForest","Iterative ridge", "Mean imputation"])
+    # plt.title("Train Set Imputation RMSE")
+    # plt.xlabel("Epochs")
+    # plt.savefig("image/{}_{}.png".format(dataset_file,missing_name))
 
     return [mf_test,ridge_test,mean_test,MIWAE_test
             ]
@@ -217,7 +219,7 @@ result = pd.DataFrame({"Missing_Rule":[rule_name for rule_name in missing_rule],
                        ,"MIWAE RMSE":MIWAE_result
                        })
 
-result.to_csv("results/{}_2Pass.csv".format(dataset_file),index=False)
+result.to_csv("results/TEST_{}_2Pass.csv".format(dataset_file),index=False)
     
 
 

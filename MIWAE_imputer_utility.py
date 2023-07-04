@@ -258,10 +258,10 @@ def load_dataloader(dataname,missing_type = "quantile", missing_name = "Q4_compl
     Xval_mask = gt_masks[valid_index]
 
     X_train_miss = np.copy(Xtrain)
-    X_train_miss[~Xtrain_mask] = np.nan # np.nan fill in
+    X_train_miss[Xtrain_mask == 0] = np.nan # np.nan fill in
 
     X_test_miss = np.copy(Xtest)
-    X_test_miss[~Xtest_mask] = np.nan # np.nan fill in
+    X_test_miss[Xtest_mask == 0] = np.nan # np.nan fill in
 
 
     x_train_hat_0 = np.copy(X_train_miss)
