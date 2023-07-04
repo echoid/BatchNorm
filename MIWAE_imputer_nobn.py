@@ -219,7 +219,7 @@ result = pd.DataFrame({"Missing_Rule":[rule_name for rule_name in missing_rule],
                        ,"MIWAE RMSE":MIWAE_result
                        })
 
-result.to_csv("results/TEST_{}_noPass.csv".format(dataset_file),index=False)
+result.to_csv("results/Second_{}_noPass.csv".format(dataset_file),index=False)
     
 
 

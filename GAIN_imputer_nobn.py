@@ -19,8 +19,8 @@ from MNAR.missing_process.block_rules import *
 missing_type = "quantile"
 
   # set it to True to use GPU and False to use CPU
-use_BN = True
-states = [False,True]
+use_BN = False
+states = [True,True]
 
 dataset_file = sys.argv[1]
 
@@ -30,7 +30,7 @@ missing_rule = ["Q1_complete","Q1_partial","Q2_complete","Q2_partial","Q3_comple
 
 
 #%% System Parameters
-batch_size = 64
+batch_size = 32
 epoch = 200
 
 
@@ -146,7 +146,7 @@ def run(dataset_file,missing_rule, use_BN):
         train_dataset, test_dataset = MyDataset(trainX, train_Mask,train_input), MyDataset(testX, test_Mask, test_input)
 
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
+        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
         imputer = Imputation_model(Dim, Dim, Dim, use_BN)
         #imputer = Simple_imputer(Dim)
@@ -181,11 +181,11 @@ def run(dataset_file,missing_rule, use_BN):
 
                 set_all_BN_layers_tracking_state(imputer,True)
 
-                prediction = loss(truth=truth_X, mask=mask, data=data_X,imputer = imputer)[1]
+                # prediction = loss(truth=truth_X, mask=mask, data=data_X,imputer = imputer)[1]
 
-                imputed_data = impute_with_prediction(truth_X, mask, prediction)
+                # imputed_data = impute_with_prediction(truth_X, mask, prediction)
 
-                _ = imputer(imputed_data, mask)
+                # _ = imputer(imputed_data, mask)
 
 
                 # print('1st BatchNorm Mean: {:.4} Var:{:.4}'.format(torch.mean(imputer.batch_mean1), torch.mean(imputer.batch_var1)))
@@ -243,7 +243,7 @@ def run(dataset_file,missing_rule, use_BN):
 
 
     result = pd.DataFrame({"Missing_Rule":[rule_name for rule_name in missing_rule],"Imputer RMSE":Imputer_RMSE,"Baseline RMSE":baseline_RMSE})
-    result.to_csv("results/GAIN_imputer/{}_32_2pass.csv".format(dataset_file),index=False)
+    result.to_csv("results/GAIN_imputer/{}_32_Nopass.csv".format(dataset_file),index=False)
 
 
 run(dataset_file,missing_rule,use_BN)

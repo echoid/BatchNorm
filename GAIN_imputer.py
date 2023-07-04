@@ -76,7 +76,7 @@ def get_dataset_loaders(trainX, testX, train_Mask, test_Mask, train_input, test_
     train_dataset, test_dataset = MyDataset(trainX, train_Mask,train_input), MyDataset(testX, test_Mask, test_input)
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
     return train_loader , test_loader
 
 def loss(truth, mask, data, imputer):

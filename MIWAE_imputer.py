@@ -31,10 +31,9 @@ from MNAR.missing_process.block_rules import *
 
 dataset_file = sys.argv[1]
 
-missing_rule = ["Q1_complete"]
-# ["Q1_complete","Q1_partial","Q2_complete","Q2_partial","Q3_complete","Q3_partial","Q4_complete","Q4_partial",
-# "Q1_Q2_complete","Q1_Q2_partial","Q1_Q3_complete","Q1_Q3_partial","Q1_Q4_complete","Q1_Q4_partial","Q2_Q3_complete","Q2_Q3_partial",
-# "Q2_Q4_complete","Q2_Q4_partial","Q3_Q4_complete","Q3_Q4_partial"]
+missing_rule = ["Q1_complete","Q1_partial","Q2_complete","Q2_partial","Q3_complete","Q3_partial","Q4_complete","Q4_partial",
+"Q1_Q2_complete","Q1_Q2_partial","Q1_Q3_complete","Q1_Q3_partial","Q1_Q4_complete","Q1_Q4_partial","Q2_Q3_complete","Q2_Q3_partial",
+"Q2_Q4_complete","Q2_Q4_partial","Q3_Q4_complete","Q3_Q4_partial"]
 
 
 
@@ -219,7 +218,7 @@ result = pd.DataFrame({"Missing_Rule":[rule_name for rule_name in missing_rule],
                        ,"MIWAE RMSE":MIWAE_result
                        })
 
-result.to_csv("results/TEST_{}_2Pass.csv".format(dataset_file),index=False)
+result.to_csv("results/Second_{}_2Pass.csv".format(dataset_file),index=False)
     
 
 
