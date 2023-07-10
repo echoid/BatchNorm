@@ -31,10 +31,9 @@ from MNAR.missing_process.block_rules import *
 
 dataset_file = 'california'
 
-missing_rule = ["Q1_complete"]
-#["Q1_complete","Q1_partial","Q2_complete","Q2_partial","Q3_complete","Q3_partial","Q4_complete","Q4_partial",
-#"Q1_Q2_complete","Q1_Q2_partial","Q1_Q3_complete","Q1_Q3_partial","Q1_Q4_complete","Q1_Q4_partial","Q2_Q3_complete","Q2_Q3_partial",
-#"Q2_Q4_complete","Q2_Q4_partial","Q3_Q4_complete","Q3_Q4_partial"]
+missing_rule = ["Q1_complete","Q1_partial","Q2_complete","Q2_partial","Q3_complete","Q3_partial","Q4_complete","Q4_partial",
+"Q1_Q2_complete","Q1_Q2_partial","Q1_Q3_complete","Q1_Q3_partial","Q1_Q4_complete","Q1_Q4_partial","Q2_Q3_complete","Q2_Q3_partial",
+"Q2_Q4_complete","Q2_Q4_partial","Q3_Q4_complete","Q3_Q4_partial"]
 
 
 missing_rule = ["C0_lower","C0_upper","C0_double","C1_lower","C1_upper","C1_double", 
@@ -54,7 +53,7 @@ n_epochs = 1000
 
 #cuda = torch.cuda.is_available()
 cuda = False
-use_bn = [False,False]
+use_bn = [True,True]
 
 
 
@@ -111,6 +110,8 @@ def run(dataset_file,missing_name):
 
             set_BN_layers_tracking_state(MIWAE, [False, False])
 
+            #x_hat[~mask] = torch.from_numpy(MIWAE(b_data, b_mask, L=10).detach().numpy()[~mask])
+
             x_imp = torch.from_numpy(MIWAE(b_data, b_mask, L=10).detach().numpy())
             mask_bool = mask.bool()
             x_hat[~mask_bool] = x_imp[~mask_bool]
@@ -119,6 +120,10 @@ def run(dataset_file,missing_name):
             loss.backward()
             optimizer.step()
 
+
+            set_BN_layers_tracking_state(MIWAE, [True, True])
+
+            _ = MIWAE(x_hat.float(), b_mask.float(), L=10).cpu().detach().numpy()
 
 
         if epoch % 100 == 1:
@@ -183,6 +188,8 @@ def run(dataset_file,missing_name):
     print("MIWAE Test RMSE:",MIWAE_test)
 
 
+
+
     return [mf_test,ridge_test,mean_test,MIWAE_test]
 
 
@@ -210,8 +217,7 @@ result = pd.DataFrame({"Missing_Rule":[rule_name for rule_name in missing_rule],
                        ,"MIWAE RMSE":MIWAE_result
                        })
 
-result.to_csv("results/Second_{}_noPass.csv".format(dataset_file),index=False)
-    
+result.to_csv("results/Second_{}_2Pass.csv".format(dataset_file),index=False)
     
 
 

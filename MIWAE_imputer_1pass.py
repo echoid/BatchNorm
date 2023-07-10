@@ -22,31 +22,38 @@ from sklearn.linear_model import BayesianRidge
 from sklearn.impute import IterativeImputer
 from sklearn.impute import SimpleImputer
     
-from MIWAE_imputer_utility import *
+from missing_name import *
 
 
 parent_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 sys.path.append(parent_directory)
 from MNAR.missing_process.block_rules import *
 
-dataset_file = sys.argv[1]
+dataset_file = 'california'
 
 missing_rule = ["Q1_complete","Q1_partial","Q2_complete","Q2_partial","Q3_complete","Q3_partial","Q4_complete","Q4_partial",
 "Q1_Q2_complete","Q1_Q2_partial","Q1_Q3_complete","Q1_Q3_partial","Q1_Q4_complete","Q1_Q4_partial","Q2_Q3_complete","Q2_Q3_partial",
 "Q2_Q4_complete","Q2_Q4_partial","Q3_Q4_complete","Q3_Q4_partial"]
 
 
+missing_rule = ["C0_lower","C0_upper","C0_double","C1_lower","C1_upper","C1_double", 
+                "C2_lower","C2_upper","C2_double", "C3_lower","C3_upper", "C3_double",
+                "C4_lower","C4_upper","C4_double","C5_lower","C5_upper","C5_double",
+                "C6_lower","C6_upper","C6_double","C7_lower","C7_upper","C7_double",
+]
+
+missing_type = "BN"
 
 h = 128 # number of hidden units in (same for all MLPs)
 d = 1 # dimension of the latent space
 K = 20 # number of IS during training
 bs = 64 # batch size
-n_epochs = 2002
+n_epochs = 1000
 
 
 #cuda = torch.cuda.is_available()
 cuda = False
-use_bn = [True,True]
+use_bn = [True,False]
 
 
 
@@ -56,7 +63,7 @@ def run(dataset_file,missing_name):
 
     Xtrain, Xtest, Xtrain_mask, Xtest_mask, n, \
         p, x_train_hat_0, x_test_hat_0, x_train_hat,\
-            x_test_hat,X_train_miss,X_test_miss = load_dataloader(dataset_file,missing_type = "quantile", \
+            x_test_hat,X_train_miss,X_test_miss = load_dataloader(dataset_file,missing_type = missing_type, \
                                         missing_name = missing_name,seed = 1)
 
 
@@ -87,6 +94,7 @@ def run(dataset_file,missing_name):
 
         batch_no = 0
         for x, mask, x_hat_0, x_hat in train_loader:
+            mask  = partial_mask(mask,missing_name)
             batch_no += 1
             optimizer.zero_grad()
             MIWAE.zero_grad()
@@ -181,17 +189,8 @@ def run(dataset_file,missing_name):
 
 
 
-    # plt.plot(range(1,n_epochs,100),mse_train,color="blue")
-    # plt.axhline(y=rmse(xhat_mf_train, Xtrain, Xtrain_mask),  linestyle='-',color="red")
-    # plt.axhline(y=rmse(xhat_ridge_train, Xtrain, Xtrain_mask),  linestyle='-',color="orange")
-    # plt.axhline(y=rmse(xhat_mean_train, Xtrain, Xtrain_mask),  linestyle='-',color="green")
-    # plt.legend(["MIWAE","missForest","Iterative ridge", "Mean imputation"])
-    # plt.title("Train Set Imputation RMSE")
-    # plt.xlabel("Epochs")
-    # plt.savefig("image/{}_{}.png".format(dataset_file,missing_name))
 
-    return [mf_test,ridge_test,mean_test,MIWAE_test
-            ]
+    return [mf_test,ridge_test,mean_test,MIWAE_test]
 
 
 
@@ -218,7 +217,7 @@ result = pd.DataFrame({"Missing_Rule":[rule_name for rule_name in missing_rule],
                        ,"MIWAE RMSE":MIWAE_result
                        })
 
-result.to_csv("results/Second_{}_2Pass.csv".format(dataset_file),index=False)
+result.to_csv("results/Second_{}_1Pass.csv".format(dataset_file),index=False)
     
 
 

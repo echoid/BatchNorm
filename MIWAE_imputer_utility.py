@@ -274,3 +274,13 @@ def load_dataloader(dataname,missing_type = "quantile", missing_name = "Q4_compl
     x_test_hat = np.copy(x_test_hat_0)
 
     return Xtrain, Xtest, Xtrain_mask, Xtest_mask, N, D, x_train_hat_0, x_test_hat_0, x_train_hat, x_test_hat,X_train_miss,X_test_miss
+
+
+
+def partial_mask(mask, missing_name, ratio=0.5):
+    col = int(missing_name[1])
+    column_mask = mask[:, col]
+    for i in range(len(column_mask)):
+        if column_mask[i] == 0:
+            column_mask[i] = np.random.choice([0, 1], p=[1 - ratio, ratio])
+    return mask
