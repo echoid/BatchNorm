@@ -7,7 +7,7 @@ import pandas as pd
 from tqdm import tqdm
 from torch.utils.data import Dataset, DataLoader
 import torch.nn.functional as F
-from utility import xavier_init,MyDataset,preprocess,load_dataloader
+from GAIN_imputer_utility import xavier_init,MyDataset,preprocess,load_dataloader
 from sklearn.impute import SimpleImputer
 parent_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 sys.path.append(parent_directory)
@@ -19,19 +19,29 @@ from MNAR.missing_process.block_rules import *
 missing_type = "quantile"
 
   # set it to True to use GPU and False to use CPU
-use_BN = False
-states = [True,True]
+use_BN = True
+states = [False,True]
 
-dataset_file = sys.argv[1]
+dataset_file = 'california'
 
 missing_rule = ["Q1_complete","Q1_partial","Q2_complete","Q2_partial","Q3_complete","Q3_partial","Q4_complete","Q4_partial",
 "Q1_Q2_complete","Q1_Q2_partial","Q1_Q3_complete","Q1_Q3_partial","Q1_Q4_complete","Q1_Q4_partial","Q2_Q3_complete","Q2_Q3_partial",
 "Q2_Q4_complete","Q2_Q4_partial","Q3_Q4_complete","Q3_Q4_partial"]
 
+missing_rule = ["C0_lower","C0_upper","C0_double","C1_lower","C1_upper","C1_double", 
+                "C2_lower","C2_upper","C2_double", "C3_lower","C3_upper", "C3_double",
+                "C4_lower","C4_upper","C4_double","C5_lower","C5_upper","C5_double",
+                "C6_lower","C6_upper","C6_double","C7_lower","C7_upper","C7_double",
+]
+
+missing_type = "BN"
+
+
+
 
 #%% System Parameters
-batch_size = 32
-epoch = 200
+batch_size = 64
+epoch = 500
 
 
 
@@ -92,9 +102,9 @@ def set_all_BN_layers_tracking_state(model, state):
         if isinstance(module, nn.BatchNorm1d):
             module.track_running_stats = state
 
-def get_dataset_loaders(trainX, train_Mask,train_input,testX, test_Mask, test_input):
+def get_dataset_loaders(trainX, train_Mask,train_input,testX,test_Mask,test_input,train_H,test_H):
 
-    train_dataset, test_dataset = MyDataset(trainX, train_Mask,train_input), MyDataset(testX, test_Mask, test_input)
+    train_dataset, test_dataset = MyDataset(trainX, train_Mask,train_input,train_H), MyDataset(testX, test_Mask, test_input,test_H)
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
@@ -140,26 +150,26 @@ def run(dataset_file,missing_rule, use_BN):
     
     for rule_name in missing_rule:
         print(dataset_file,rule_name,use_BN,states)
-        trainX, testX, train_Mask, test_Mask, train_input, test_input, No, Dim = load_dataloader(dataset_file,missing_type, rule_name)
+        trainX, testX, train_Mask, test_Mask, train_input, test_input, No, Dim,train_H, test_H = load_dataloader(dataset_file,missing_type, rule_name)
 
     
-        train_dataset, test_dataset = MyDataset(trainX, train_Mask,train_input), MyDataset(testX, test_Mask, test_input)
+        # train_dataset, test_dataset = MyDataset(trainX, train_Mask,train_input,train_H), MyDataset(testX, test_Mask, test_input,test_H)
 
-        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+        # train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+        # test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
 
         imputer = Imputation_model(Dim, Dim, Dim, use_BN)
         #imputer = Simple_imputer(Dim)
         optimizer = torch.optim.Adam(params=imputer.parameters())
 
-        train_loader , test_loader = get_dataset_loaders(trainX, train_Mask,train_input, testX, test_Mask, test_input)
+        train_loader , test_loader = get_dataset_loaders(trainX, train_Mask,train_input, testX, test_Mask, test_input,train_H,test_H)
 
 
         for it in tqdm(range(epoch)):
             imputer.train()
             total_loss = 0
             batch_no = 0
-            for truth_X, mask, data_X in train_loader:
+            for truth_X, mask, data_X,x_hat in train_loader:
                 batch_no += 1
 
                 # print("======Batch {} Start======".format(batch_no))
@@ -181,11 +191,11 @@ def run(dataset_file,missing_rule, use_BN):
 
                 set_all_BN_layers_tracking_state(imputer,True)
 
-                # prediction = loss(truth=truth_X, mask=mask, data=data_X,imputer = imputer)[1]
+                prediction = loss(truth=truth_X, mask=mask, data=data_X,imputer = imputer)[1]
 
-                # imputed_data = impute_with_prediction(truth_X, mask, prediction)
+                imputed_data = impute_with_prediction(truth_X, mask, prediction)
 
-                # _ = imputer(imputed_data, mask)
+                _ = imputer(imputed_data, mask)
 
 
                 # print('1st BatchNorm Mean: {:.4} Var:{:.4}'.format(torch.mean(imputer.batch_mean1), torch.mean(imputer.batch_var1)))
@@ -243,7 +253,7 @@ def run(dataset_file,missing_rule, use_BN):
 
 
     result = pd.DataFrame({"Missing_Rule":[rule_name for rule_name in missing_rule],"Imputer RMSE":Imputer_RMSE,"Baseline RMSE":baseline_RMSE})
-    result.to_csv("results/GAIN_imputer/{}_32_Nopass.csv".format(dataset_file),index=False)
+    result.to_csv("results/GAIN_imputer/{}_2pass.csv".format(dataset_file),index=False)
 
 
 run(dataset_file,missing_rule,use_BN)

@@ -1,0 +1,25 @@
+Missing_Rule,Imputer RMSE,Baseline RMSE
+C0_lower,,0.16703
+C0_upper,,0.21495
+C0_double,0.06417,0.1398
+C1_lower,,0.41083
+C1_upper,,0.41206
+C1_double,0.24572,0.26914
+C2_lower,,0.01573
+C2_upper,,0.03771
+C2_double,0.00982,0.02618
+C3_lower,0.00246,0.00691
+C3_upper,,0.04454
+C3_double,0.00773,0.03148
+C4_lower,,0.03558
+C4_upper,,0.05999
+C4_double,0.03089,0.03948
+C5_lower,0.0002,0.00113
+C5_upper,0.00321,0.00224
+C5_double,0.00091,0.00157
+C6_lower,,0.07297
+C6_upper,,0.09494
+C6_double,0.01566,0.05911
+C7_lower,,0.03367
+C7_upper,,0.02746
+C7_double,0.05038,0.02113

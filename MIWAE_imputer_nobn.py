@@ -29,27 +29,42 @@ parent_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pa
 sys.path.append(parent_directory)
 from MNAR.missing_process.block_rules import *
 
+
+print(sys.argv)
 dataset_file = 'california'
-
-missing_rule = ["Q1_complete"]
-#["Q1_complete","Q1_partial","Q2_complete","Q2_partial","Q3_complete","Q3_partial","Q4_complete","Q4_partial",
-#"Q1_Q2_complete","Q1_Q2_partial","Q1_Q3_complete","Q1_Q3_partial","Q1_Q4_complete","Q1_Q4_partial","Q2_Q3_complete","Q2_Q3_partial",
-#"Q2_Q4_complete","Q2_Q4_partial","Q3_Q4_complete","Q3_Q4_partial"]
+dataset_file = sys.argv[1]
 
 
-missing_rule = ["C0_lower","C0_upper","C0_double","C1_lower","C1_upper","C1_double", 
-                "C2_lower","C2_upper","C2_double", "C3_lower","C3_upper", "C3_double",
-                "C4_lower","C4_upper","C4_double","C5_lower","C5_upper","C5_double",
-                "C6_lower","C6_upper","C6_double","C7_lower","C7_upper","C7_double",
-]
 
 missing_type = "BN"
+missing_type = sys.argv[2]
+
+if missing_type == "BN":
+    missing_rule = ["C0_lower","C0_upper","C0_double","C1_lower","C1_upper","C1_double", 
+                "C2_lower","C2_upper","C2_double", "C3_lower","C3_upper", "C3_double",
+                "C4_lower","C4_upper","C4_double","C5_lower","C5_upper","C5_double",
+                "C6_lower","C6_upper","C6_double","C7_lower","C7_upper","C7_double"]
+
+    missing_rule = ["C0_lower","C0_upper","C1_lower","C1_upper",
+                "C2_lower","C2_upper", "C3_lower","C3_upper",
+                "C4_lower","C4_upper","C5_lower","C5_upper",
+                "C6_lower","C6_upper","C7_lower","C7_upper"]
+
+    missing_rule = ["C0_double","C1_double", 
+                ,"C2_double", "C3_double",
+                "C4_double","C5_double",
+                "C6_double","C7_double"]
+else:
+    missing_rule = ["Q1_complete","Q1_partial","Q2_complete","Q2_partial","Q3_complete","Q3_partial","Q4_complete","Q4_partial"
+    #,"Q1_Q2_complete","Q1_Q2_partial","Q1_Q3_complete","Q1_Q3_partial","Q1_Q4_complete","Q1_Q4_partial","Q2_Q3_complete","Q2_Q3_partial",
+    #"Q2_Q4_complete","Q2_Q4_partial","Q3_Q4_complete","Q3_Q4_partial"
+    ]
 
 h = 128 # number of hidden units in (same for all MLPs)
 d = 1 # dimension of the latent space
 K = 20 # number of IS during training
 bs = 64 # batch size
-n_epochs = 1000
+n_epochs = 500
 
 
 #cuda = torch.cuda.is_available()
@@ -109,7 +124,7 @@ def run(dataset_file,missing_name):
                 x_hat = x_hat.float()
             
 
-            set_BN_layers_tracking_state(MIWAE, [False, False])
+            #set_BN_layers_tracking_state(MIWAE, [False, False])
 
             x_imp = torch.from_numpy(MIWAE(b_data, b_mask, L=10).detach().numpy())
             mask_bool = mask.bool()
@@ -210,8 +225,10 @@ result = pd.DataFrame({"Missing_Rule":[rule_name for rule_name in missing_rule],
                        ,"MIWAE RMSE":MIWAE_result
                        })
 
-result.to_csv("results/Second_{}_noPass.csv".format(dataset_file),index=False)
+result.to_csv("results/{}_{}_0Pass.csv".format(dataset_file,missing_type),index=False)
     
+
+
     
 
 
