@@ -12,7 +12,7 @@ from sklearn.impute import SimpleImputer
 parent_directory = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 sys.path.append(parent_directory)
 from MNAR.missing_process.block_rules import *
-
+from GAIN_imputer_utility import get_dataset_loaders
 
 #dataset_file = "banknote"#'concrete_compression', "wine_quality_red","wine_quality_white"
   # 'Letter.csv' for Letter dataset an 'Spam.csv' for Spam dataset
@@ -102,14 +102,14 @@ def set_all_BN_layers_tracking_state(model, state):
         if isinstance(module, nn.BatchNorm1d):
             module.track_running_stats = state
 
-def get_dataset_loaders(trainX, train_Mask,train_input,testX,test_Mask,test_input,train_H,test_H):
+# def get_dataset_loaders(trainX, train_Mask,train_input,testX,test_Mask,test_input,train_H,test_H):
 
-    train_dataset, test_dataset = MyDataset(trainX, train_Mask,train_input,train_H), MyDataset(testX, test_Mask, test_input,test_H)
+#     train_dataset, test_dataset = MyDataset(trainX, train_Mask,train_input,train_H), MyDataset(testX, test_Mask, test_input,test_H)
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+#     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+#     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
-    return train_loader , test_loader
+#     return train_loader , test_loader
 
 def loss(truth, mask, data,imputer):
     generated = imputer(data, mask)
@@ -150,9 +150,12 @@ def run(dataset_file,missing_rule, use_BN):
     
     for rule_name in missing_rule:
         print(dataset_file,rule_name,use_BN,states)
-        trainX, testX, train_Mask, test_Mask, train_input, test_input, No, Dim,train_H, test_H = load_dataloader(dataset_file,missing_type, rule_name)
+        trainX, testX, train_Mask, test_Mask, train_input, test_input, No, Dim,train_H, test_H,Xval_org, Xval_org_mask, val_input, val_H = load_dataloader(dataset_file,missing_type, rule_name)
 
-    
+        best_validation_loss = float('inf')  # Initialize with a high value
+        best_model_state = None
+        early_stopping_counter = 0
+        patience = 10
         # train_dataset, test_dataset = MyDataset(trainX, train_Mask,train_input,train_H), MyDataset(testX, test_Mask, test_input,test_H)
 
         # train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
@@ -162,8 +165,7 @@ def run(dataset_file,missing_rule, use_BN):
         #imputer = Simple_imputer(Dim)
         optimizer = torch.optim.Adam(params=imputer.parameters())
 
-        train_loader , test_loader = get_dataset_loaders(trainX, train_Mask,train_input, testX, test_Mask, test_input,train_H,test_H)
-
+        train_loader , test_loader, val_loader = get_dataset_loaders(trainX, train_Mask,train_input,testX, test_Mask,test_input,train_H, test_H,Xval_org, Xval_org_mask, val_input, val_H )
 
         for it in tqdm(range(epoch)):
             imputer.train()
@@ -205,16 +207,52 @@ def run(dataset_file,missing_rule, use_BN):
                 # print("======Batch {} End======\n\n".format(batch_no))
 
 
+            avg_train_loss = np.sqrt(total_loss.detach().numpy() / batch_no)
             print('Iter: {}'.format(it), end='\t')
+            print(total_loss.item(),batch_no)
             print('Train_loss: {:.4}'.format(np.sqrt(total_loss.item()/batch_no)))
 
+
+                    # Validation step
+            imputer.eval()
+            with torch.no_grad():
+                total_val_loss = 0
+                val_batch_no = 0
+
+                for truth_X_val, mask_val, data_X_val, x_hat_val in val_loader:
+                    val_batch_no += 1
+
+                    val_loss = loss(truth=truth_X_val, mask=mask_val, data=data_X_val, imputer=imputer)[0]
+                    total_val_loss += val_loss.item()
+
+            avg_val_loss = np.sqrt(total_val_loss / val_batch_no)
+
+            # Check for improvement in validation loss
+            if avg_val_loss < best_validation_loss:
+                best_validation_loss = avg_val_loss
+                best_model_state = imputer.state_dict()
+                early_stopping_counter = 0
+            else:
+                early_stopping_counter += 1
+
+            # Print current epoch's training and validation loss
+            print('Epoch: {}'.format(it), end='\t')
+            print('Train_loss: {:.4}'.format(avg_train_loss), end='\t')
+            print('Val_loss: {:.4}'.format(avg_val_loss), end='\n')
+
+            # Check for early stopping
+            if early_stopping_counter >= patience:
+                print("Early stopping! No improvement in validation loss for {} epochs.".format(patience))
+                break
+
+        imputer.load_state_dict(best_model_state)
 
         # Evaluation
 
         with torch.no_grad():
             imputer.eval()
             RMSE_total = []
-            for truth_X, mask, data_X , x_hat in test_loader:
+            for truth_X, mask, data_X , x_hat in val_loader:
 
                 RMSE, prediction =  loss(truth=truth_X, mask=mask, data=data_X,imputer = imputer)
                 imputed_data = impute_with_prediction(truth_X, mask, prediction)
