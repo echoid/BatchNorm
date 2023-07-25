@@ -214,7 +214,7 @@ def run(dataset_file,missing_rule, use_BN):
         with torch.no_grad():
             imputer.eval()
             RMSE_total = []
-            for truth_X, mask, data_X in test_loader:
+            for truth_X, mask, data_X , x_hat in test_loader:
 
                 RMSE, prediction =  loss(truth=truth_X, mask=mask, data=data_X,imputer = imputer)
                 imputed_data = impute_with_prediction(truth_X, mask, prediction)

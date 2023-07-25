@@ -44,15 +44,15 @@ if missing_type == "BN":
                 "C4_lower","C4_upper","C4_double","C5_lower","C5_upper","C5_double",
                 "C6_lower","C6_upper","C6_double","C7_lower","C7_upper","C7_double"]
                 
-    missing_rule = ["C0_lower","C0_upper","C1_lower","C1_upper",
-                "C2_lower","C2_upper", "C3_lower","C3_upper",
-                "C4_lower","C4_upper","C5_lower","C5_upper",
-                "C6_lower","C6_upper","C7_lower","C7_upper"]
+    # missing_rule = ["C0_lower","C0_upper","C1_lower","C1_upper",
+    #             "C2_lower","C2_upper", "C3_lower","C3_upper",
+    #             "C4_lower","C4_upper","C5_lower","C5_upper",
+    #             "C6_lower","C6_upper","C7_lower","C7_upper"]
 
-    missing_rule = ["C0_double","C1_double", 
-                ,"C2_double", "C3_double",
-                "C4_double","C5_double",
-                "C6_double","C7_double"]
+    # missing_rule = ["C0_double","C1_double", 
+    #             "C2_double", "C3_double",
+    #             "C4_double","C5_double",
+    #             "C6_double","C7_double"]
 else:
     missing_rule = ["Q1_complete","Q1_partial","Q2_complete","Q2_partial","Q3_complete","Q3_partial","Q4_complete","Q4_partial"
     #,"Q1_Q2_complete","Q1_Q2_partial","Q1_Q3_complete","Q1_Q3_partial","Q1_Q4_complete","Q1_Q4_partial","Q2_Q3_complete","Q2_Q3_partial",
@@ -234,7 +234,7 @@ result = pd.DataFrame({"Missing_Rule":[rule_name for rule_name in missing_rule],
                        ,"MIWAE RMSE":MIWAE_result
                        })
 
-result.to_csv("results/{}_{}_2Pass.csv".format(dataset_file,missing_type),index=False)
+result.to_csv("results/MIWAE_imputer/{}_{}_2Pass.csv".format(dataset_file,missing_type),index=False)
     
 
 

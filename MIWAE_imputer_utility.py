@@ -220,6 +220,8 @@ def load_dataloader(dataname,missing_type = "quantile", missing_name = "Q4_compl
     processed_data_path_norm = (
             f"../MNAR/datasets/{dataname}/{missing_type}-{missing_name}_seed-{seed}_max-min_norm.pk"
         )
+
+        
     with open(processed_data_path_norm, "rb") as f:
             observed_values, observed_masks, gt_masks, eval_length = pickle.load(
                     f
